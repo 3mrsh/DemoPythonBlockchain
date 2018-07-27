@@ -44,6 +44,10 @@ We haven't implemented nor attempted to use the Blockchain Script language. As a
 
 We haven't implemented Transaction Fees; a miner only receives the CB amount. In that vain, there is also only an arbitrary method for selecting pending transactions to include in a block.
 
+We currently 'subtract' someone's funds immediately; whereas in reality, a UTXO is not 'used' until the transaction is in a block, added to the Blockchain. If we want to implement that stall, we need to also ensure we either avoid selecting the same UTXOs (as then the transactions would be cancelled) or co-ordinate them so one uses the 'change' of the other.
+
+We have made the conscious decision to allow each Node to store (in its instance of the blockchain's nodes class), a Reference to each of its fellow nodes. That means that the singleton instance of each node can be accessed by each other node. The alternative would have been to pass in a copy of each Node, thereby preventing nodes from interfering with each other and more accurately capturing the Blockchain security protocls. But, given the large memory footprint that would be needed to copy each Node (and with that, their copies of the Blockchain  [which may well result in an infinite loop] ), we decide against that. A future iteration could build this chain with a simplified NeighborNode class that merely holds the address of each nodes, and, somehow, the ability to access the Nodes via the NotifyNodes() method on them only. For this demo, we just assume users would not call malicious functions.
+
 
 #Resources:
     Encryption implemented acc. to : https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
