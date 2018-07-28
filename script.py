@@ -27,7 +27,7 @@ blockchainPoE.nodes.append(nodePoE)
 nodeA = blockchainPoE.newNode()
 nodeB = blockchainPoE.newNode()
 nodeC = blockchainPoE.newNode()
-
+nodeD = blockchainPoE.newNode()
 
 
 ###############################################
@@ -46,7 +46,7 @@ nodeB.mine()
 nodeC.mine()
 nodeC.mine()
 
-
+nodeD.mine()
 
 ###############################################
 ## Begin Normal Market Operations :
@@ -54,100 +54,18 @@ nodeC.mine()
 #  and different types of transactions mixed in.
 # 
 ###############################################
-def test1():
-    print 'A=', nodeA.wallet.getBalance() == 60
-    trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-10)
-    print 'B=', nodeB.wallet.getBalance() == 45
-    nodeB.mine()
-    print 'C=', nodeA.wallet.getBalance() == (60-10)
-    print 'D=', nodeB.wallet.getBalance() == (45+15+10)
 
-def test2():
-    print 'A=', nodeA.wallet.getBalance() == 60
-    trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-10)
-    trans2 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-20)
-    print 'B=', nodeB.wallet.getBalance() == 45
-    nodeB.mine()
-    print 'C=', nodeA.wallet.getBalance() == (60-20)
-    print 'D=', nodeB.wallet.getBalance() == (45+15+20)
-
-def test3():
-    print 'A=', nodeA.wallet.getBalance() == 60
-    trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == 50
-    trans2 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == 40
-    trans3 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == 30
-    print 'B=', nodeB.wallet.getBalance() == 45
-    nodeB.mine()
-    print 'C=', nodeA.wallet.getBalance() == (60-30)
-    print 'D=', nodeB.wallet.getBalance() == (45+15+30)
-
-def test4():
-    print 'A=', nodeA.wallet.getBalance() == 60
-    trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-10)
-    trans2 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-20)
-    trans3 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-30)
-    trans4 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-40)
-    print 'B=', nodeB.wallet.getBalance() == 45
-    nodeB.mine()
-    print 'C=', nodeA.wallet.getBalance() == (60-40)
-    print 'D=', nodeB.wallet.getBalance() == (45+15+40)
-
-def test5(): 
-    print 'A=', nodeA.wallet.getBalance() == 60
-    trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-10)
-    trans2 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-20)
-    trans3 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-30)
-    trans4 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-40)
-    trans5 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-50)
-    print 'B=', nodeB.wallet.getBalance() == 45
-    nodeB.mine()
-    print 'C=', nodeA.wallet.getBalance() == (60-50)
-    print 'D=', nodeB.wallet.getBalance() == (45+15+40)
-    print '(failed?) D= ', nodeB.wallet.getBalance() == 100
-    print 'But, now if someone else mines a block w/ the pending transxns'
-    print 'E=', (len(nodeB.blockchain.incompl_transxns)==len(nodeC.blockchain.incompl_transxns)) and (len(nodeB.blockchain.incompl_transxns)>0)
-    nodeC.mine()
-    print 'F=', nodeA.wallet.getBalance() == (60-50)
-    print 'G=', nodeB.wallet.getBalance() == (45+15+50)
-    print 'H=', nodeC.wallet.getBalance() == (30+15)
-    
-#Problem: nodeB.wallet.getBalance()==10
-def test6():
-    print 'A=', nodeA.wallet.getBalance() == 60
-    trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-10)
-    trans2 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-20)
-    trans3 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-30)
-    trans4 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-40)
-    trans5 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-50)
-    trans6 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-    print 'A=', nodeA.wallet.getBalance() == (60-60)
-    print 'B=', nodeB.wallet.getBalance() == 45
-    nodeB.mine()
-    print 'C=', nodeA.wallet.getBalance() == (60-60)
-    print 'D=', nodeB.wallet.getBalance() == (45+15+40)
-    print 'E=', (len(nodeB.blockchain.incompl_transxns)==len(nodeC.blockchain.incompl_transxns)) and (len(nodeB.blockchain.incompl_transxns)>0)
-    nodeC.mine()
-    print 'F=', nodeA.wallet.getBalance() == (60-60)
-    print 'G=', nodeB.wallet.getBalance() == (45+15+60)
-    print 'H=', nodeC.wallet.getBalance() == (30+15)
-
+nodeA.wallet.makeTransaction(nodeB.wallet.address, 30)
+nodeA.wallet.makeTransaction(nodeB.wallet.address, 20)
+nodeB.wallet.makeTransaction(nodeA.wallet.address, 15)
+nodeB.wallet.makeTransaction(nodeC.wallet.address, 15)
+nodeD.mine()
+nodeD.wallet.makeTransaction(nodeA.wallet.address, 20)
+nodeB.wallet.makeTransaction(nodeA.wallet.address, 20)
+nodeC.wallet.makeTransaction(nodeA.wallet.address, 20)
+nodeD.mine()
+nodeC.mine()
+nodeC.mine()
+nodeC.wallet.makeTransaction(nodeB.wallet.address,15)
+nodeC.wallet.makeTransaction(nodeB.wallet.address,50)
+nodeC.wallet.makeTransaction(nodeB.wallet.address,40)

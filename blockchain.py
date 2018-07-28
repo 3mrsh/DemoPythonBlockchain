@@ -746,7 +746,7 @@ class Wallet:
         else:
             return [ [val, rcpt_address] ]
 
-    def makeTransaction(self, rcpt_address, val, _print=True):
+    def makeTransaction(self, rcpt_address, val, _print=True, _return=False):
         '''
         Make transaction from this wallet to recepient's address of certain value.
         - rcpt_address (string): address of recipient
@@ -778,7 +778,8 @@ class Wallet:
 
         if _print:
             print "Successful transaction."
-        return transxn
+        if _return:
+            return transxn
 
     def getBalance(self):
         return self.getUTXOs(getAll=True)[1]
