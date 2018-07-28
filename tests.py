@@ -1,99 +1,133 @@
+# execfile('tests.py')
+''' 
+This is the file that will hold the instantiation of our classes & the logic for the demo.
+'''
+
 from blockchain import *
 import itertools
 
 inlCBVal=15
 
-nodePoE = Node(CBVal = inlCBVal)
-blockchainPoE = nodePoE.blockchain
-blockchainPoE.nodes.append(nodePoE) #This introduces our nodePoE into the Blockchain.
+def newTestingEnv():
+    #Config
+    nodePoE = Node(CBVal = inlCBVal)
+    blockchainPoE = nodePoE.blockchain
+    blockchainPoE.nodes.append(nodePoE)
+    nodeA = blockchainPoE.newNode()
+    nodeB = blockchainPoE.newNode()
+    nodeC = blockchainPoE.newNode()
+    nodeA.mine(_print=False)
+    nodeA.mine(_print=False)
+    nodeA.mine(_print=False)
+    nodeA.mine(_print=False)
+    nodeB.mine(_print=False)
+    nodeB.mine(_print=False)
+    nodeB.mine(_print=False)
+    nodeC.mine(_print=False)
+    nodeC.mine(_print=False)
+    return (nodeA, nodeB, nodeC)
 
-nodeA = blockchainPoE.newNode()
-nodeB = blockchainPoE.newNode()
-nodeC = blockchainPoE.newNode()
+def test1():
+    (nodeA, nodeB, nodeC) = newTestingEnv()
+    num_txns = 1
+    print 'nodeA initial balance==60?', nodeA.wallet.getBalance() == 60
 
-''' All nodes have different, yet equivalent, instances of the Blockchain'''
-print not(nodeA.blockchain.chain == nodeB.blockchain.chain) #Return True.
-print vars(nodeA.blockchain.chain[0]) == vars(nodeB.blockchain.chain[0]) #Return True.
+    for i in range(1,num_txns+1):
+        trans1 = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10, _print=False)
+        print 'After ', str(i), ' pending txn, nodeA balance == (60-', str(10*i),'?', nodeA.wallet.getBalance() == (60-10)
 
-''' All nodes have copies of their fellow nodes'''
-print nodeA.blockchain.nodes == nodeB.blockchain.nodes  #True
-print nodePoE.blockchain.nodes[0] == nodePoE #True
-print nodeA.blockchain.nodes[1] == nodeA #True
-print nodeB.blockchain.nodes[2] == nodeB #True
-print nodeB.blockchain.nodes[3] == nodeC #True
-print( (len(nodePoE.blockchain.nodes) == len(nodeA.blockchain.nodes)) and 
-    ((len(nodeA.blockchain.nodes) == len(nodeB.blockchain.nodes))) and 
-    ((len(nodeB.blockchain.nodes) == len(nodeC.blockchain.nodes)))
-) #True
+    print 'After ', str(num_txns),' pending txn, nodeB balance == 45?', nodeB.wallet.getBalance() == 45
+    nodeB.mine()
+    print 'After all of its txn is mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60 - num_txns*10)
+    print 'After mining a block with all the txns, nodeB balance == (45+15+', str(num_txns*10),')?', nodeB.wallet.getBalance() == (45+15+num_txns*10)
+    print 'If all printed booleans are True, the test was succesful.'
 
-#------------------
-# Gen. some in'l currency by mining empty blocks.
-nodeA.mine()
-nodeA.mine()
-nodeA.mine()
-nodeA.mine()
+def test2():
+    (nodeA, nodeB, nodeC) = newTestingEnv()
+    num_txns = 2
+    print 'nodeA initial balance==60?', nodeA.wallet.getBalance() == 60
 
-nodeB.mine()
-nodeB.mine()
-nodeB.mine()
+    for i in range(1,num_txns+1):
+        trans = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10, _print=False)
+        print 'After ',str(i),' pending txns, nodeA balance == (60-',str(10*i),')?', nodeA.wallet.getBalance() == (60-10*i)
 
-nodeC.mine()
-nodeC.mine()
+    print 'After ', str(num_txns),' pending txn, nodeB balance == 45?', nodeB.wallet.getBalance() == 45
+    nodeB.mine()
+    print 'After all of its txn is mined, nodeA balance == ', (60-num_txns*10) ,'?', nodeA.wallet.getBalance() == (60 - num_txns*10)
+    print 'After mining a block with all the txns, nodeB balance == (45+15+', str(num_txns*10),')?', nodeB.wallet.getBalance() == (45+15+num_txns*10)
+    print 'If all printed booleans are True, the test was succesful.'
 
-''' All nodes have the same # of blocks. '''
-# print( (len(nodePoE.blockchain.chain) == len(nodeA.blockchain.chain)) and 
-#     ((len(nodeA.blockchain.chain) == len(nodeB.blockchain.chain))) and 
-#     ((len(nodeB.blockchain.chain) == len(nodeC.blockchain.chain)))
-# ) #True
-# for a,b in list(itertools.combinations([nodePoE, nodeA, nodeB, nodeC],2)):
-#     for c,d in zip(a.blockchain.chain,b.blockchain.chain):
-#         if c==d:
-#             print 'c==d' #Never print
-#         if vars(c)!=vars(d):
-#             print "vars(c)!=vars(d)" #Never print
+def test3():
+    (nodeA, nodeB, nodeC) = newTestingEnv()
+    num_txns = 3
+    print 'nodeA initial balance==60?', nodeA.wallet.getBalance() == 60
 
+    for i in range(1,num_txns+1):
+        trans = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10, _print=False)
+        print 'After ',str(i),' pending txns, nodeA balance == (60-',str(10*i),')?', nodeA.wallet.getBalance() == (60-10*i)
+    
+    print 'After ', str(num_txns),' pending txn, nodeB balance == 45?', nodeB.wallet.getBalance() == 45
+    nodeB.mine()
+    print 'After all of its txn is mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60 - num_txns*10)
+    print 'After mining a block with all the txns, nodeB balance == (45+15+', str(num_txns*10),')?', nodeB.wallet.getBalance() == (45+15+num_txns*10)
+    print 'If all printed booleans are True, the test was succesful.'
 
-#------------------
-# Send some transactions.
-#To run tests; check:
-#nodeA.wallet.getUTXOs(getAll=True)[1]
-#nodeA.wallet.getIncompleteUTXOInfo(getAll=True)[1]
+def test4():
+    (nodeA, nodeB, nodeC) = newTestingEnv()
+    num_txns = 4
+    print 'nodeA initial balance==60?', nodeA.wallet.getBalance() == 60
 
-nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10)
-len(nodeA.blockchain.incompl_transxns)
-len(nodeB.blockchain.incompl_transxns)
-len(nodeC.blockchain.incompl_transxns)
-len(nodePoE.blockchain.incompl_transxns)
-len(nodeA.blockchain.my_incompl_transxns)
-len(nodeB.blockchain.my_incompl_transxns)
-len(nodeC.blockchain.my_incompl_transxns)
+    for i in range(1,num_txns+1):
+        trans = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10, _print=False)
+        print 'After ',str(i),' pending txns, nodeA balance == (60-',str(i*10),')?', nodeA.wallet.getBalance() == (60-10*i)
+    
+    print 'After ', str(num_txns),' pending txn, nodeB balance == 45?', nodeB.wallet.getBalance() == 45
+    nodeB.mine()
+    print 'After all of its txn is mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60 - num_txns*10)
+    print 'After mining a block with all the txns, nodeB balance == (45+15+', str(num_txns*10),')?', nodeB.wallet.getBalance() == (45+15+num_txns*10)
+    print 'If all printed booleans are True, the test was succesful.'
 
+def test5(): 
+    (nodeA, nodeB, nodeC) = newTestingEnv()
+    num_txns = 5 
+    print 'nodeA initial balance==60?', nodeA.wallet.getBalance() == 60
 
-nodeB.mine()
-nodeB.wallet.makeTransaction(rcpt_address=nodeC.wallet.address, val = 90)
-len(nodeA.blockchain.incompl_transxns)
-len(nodeB.blockchain.incompl_transxns)
-len(nodeC.blockchain.incompl_transxns)
-len(nodeA.blockchain.my_incompl_transxns)
-len(nodeB.blockchain.my_incompl_transxns)
-len(nodeC.blockchain.my_incompl_transxns)
+    for i in range(1,num_txns+1):
+        trans = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10, _print=False)
+        print 'After ',str(i),' pending txns, nodeA balance == (60-',str(i*10),')?', nodeA.wallet.getBalance() == (60-10*i)
 
+    print 'After ', str(num_txns),' pending txn, nodeB balance == 45?', nodeB.wallet.getBalance() == 45
+    nodeB.mine()
+    print 'After 4 of its 5 txns are mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60 - num_txns*10)
+    print 'After mining a block with 4 of nodeAs 5 txns, nodeB balance == (45+15+', str(4*10),')?', nodeB.wallet.getBalance() == (45+15+4*10)
+    print 'This is because a block can only hold 5 txns, with the 1st reserved for the Coinbase transaction'
+    print 'Confirm that there are still incomplete_transactions? ', (len(nodeB.blockchain.incompl_transxns)==len(nodeC.blockchain.incompl_transxns)) and (len(nodeB.blockchain.incompl_transxns)>0)
+    print 'Now if anyone mines a new block with the pending transxns (here we select C to do so)'
+    nodeC.mine()
+    print 'After all of its txns are mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60-num_txns*10)
+    print 'After receiving all of the txns & mining 1 addl block, nodeB balance == (45+15+50)?', nodeB.wallet.getBalance() == (45+15+num_txns*10)
+    print 'After mining an addl block, nodeCs balance == 45?', nodeC.wallet.getBalance() == (30+15)
+    print 'If all printed booleans are True, the test was succesful.'
+    
+#Problem: nodeB.wallet.getBalance()==10
+def test6():
+    (nodeA, nodeB, nodeC) = newTestingEnv()
+    num_txns = 6
+    print 'nodeA initial balance==60?', nodeA.wallet.getBalance() == 60
 
-nodeC.mine()
-len(nodeA.blockchain.incompl_transxns)
-len(nodeB.blockchain.incompl_transxns)
-len(nodeC.blockchain.incompl_transxns)
-len(nodeA.blockchain.my_incompl_transxns)
-len(nodeB.blockchain.my_incompl_transxns)
-len(nodeC.blockchain.my_incompl_transxns)
+    for i in range(1,num_txns+1):
+        trans = nodeA.wallet.makeTransaction(rcpt_address=nodeB.wallet.address, val=10, _print=False)
+        print 'After ',str(i),' pending txns, nodeA balance == (60-',str(i*10),')?', nodeA.wallet.getBalance() == (60-10*i)
 
-nodeC.wallet.makeTransaction(rcpt_address = nodeB.wallet.address, val = 135)
-nodeC.wallet.makeTransaction(rcpt_address = nodeB.wallet.address, val = 1)
-nodeA.mine()
-
-
+    print 'After ', str(num_txns),' pending txn, nodeB balance == 45?', nodeB.wallet.getBalance() == 45
+    nodeB.mine()
+    print 'After 4 of its 6 txns are mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60 - num_txns*10)
+    print 'After mining a block with 4 of nodeAs 6 txns, nodeB balance == (45+15+', str(4*10),')?', nodeB.wallet.getBalance() == (45+15+4*10)
+    print 'This is because a block can only hold 6 txns, with the 1st reserved for the Coinbase transaction'
+    print 'Confirm that there are still incomplete_transactions? ', (len(nodeB.blockchain.incompl_transxns)==len(nodeC.blockchain.incompl_transxns)) and (len(nodeB.blockchain.incompl_transxns)>0)
+    print 'Now if anyone mines a new block with the pending transxns (here we select C to do so)'
+    nodeC.mine()
+    print 'After all of its txns are mined, nodeA balance ==', (60-num_txns*10),'?', nodeA.wallet.getBalance() == (60-num_txns*10)
+    print 'After receiving all of the txns & mining 1 addl block, nodeB balance == (45+15+60)?', nodeB.wallet.getBalance() == (45+15+num_txns*10)
+    print 'After mining an addl block, nodeCs balance == 45?', nodeC.wallet.getBalance() == (30+15)
+    print 'If all printed booleans are True, the test was succesful.'

@@ -93,6 +93,15 @@ class Blockchain:
         '''
         self.notifyNodes(data=transxn, newTransxn=True)
 
+    def getByTXID(self,txid):
+        for block in self.chain:
+            for txn in block.transxns:
+                if txn.TXID==txid:
+                    return txn
+        for txn in self.incompl_transxns:
+            if txn.TXID==txid:
+                return txn
+
 class Block:
     def __init__(self, copyBlock=None, ph="", t=[], n=None, _time=None, isGenesis=False, minerAdd="", CBVal=None):
         '''
@@ -142,7 +151,7 @@ class Block:
     def setTransactions(self, t=[]):
         self.transxns = t
 
-    def proofOfWork(self):
+    def proofOfWork(self, _print=False):
         ''' 
         Proof of Work function. Constructs Merkle Root, then compiles data into Header, then iterates over nonce until
         satisfying condition.
@@ -159,7 +168,8 @@ class Block:
 
         self.hash = potlHash
         self.nonce = nonce
-        print("POW Success; nonce = ", nonce, "; hash = ",potlHash)
+        if _print:
+            print("POW Success; nonce = ", nonce, "; hash = ",potlHash)
         # then hash the Merkle Tree; the Nonce; and the Prev. Hash all together.
         return 
     
@@ -466,7 +476,7 @@ class Node:
             return False
 
         #3) sum(Input) >= sum(Output)
-        test3 = self.__inputsAreGrequalOutptus(txn)
+        test3 = self.__inputsAreGrequalOutputs(txn)
         if not test3:
             print "Test3 failed"
             return False
@@ -486,7 +496,7 @@ class Node:
         return True
 
     #Mining:
-    def mine(self):
+    def mine(self, _print=False):
         '''
         Create and then mine a new block.
         INCOMPLETE
@@ -505,7 +515,7 @@ class Node:
         block.setTransactions(selected_txns)
 
         #4) Perform Proof of Work.
-        block.proofOfWork()
+        block.proofOfWork(_print=_print)
 
         #5) Broadcast it to the other nodes.
         self.blockchain.notifyNodes(data=block, newBlock=True)
@@ -547,7 +557,7 @@ class Node:
                 return False
         return True
 
-    def __inputsAreGrequalOutptus(self, txn = None):
+    def __inputsAreGrequalOutputs(self, txn = None):
         #Must throw this in with the other pending transactions so we can get output value.
         inputs_pairs = []
         input_val = 0
@@ -658,11 +668,11 @@ class Wallet:
                         UTXOs.append( [txn.TXID, i, outp.scriptPubKey.verify] )
                         val_found += outp.val
                         if (not getAll) and (val_found >= val):
-                            print "exit1"
                             if(getArrs):
                                 return (UTXOs, val_found, STXOs)
                             else:
                                 return (UTXOs, val_found)
+                i +=1
         if(getArrs):
             return ( UTXOs, val_found, STXOs)
         else:
@@ -688,14 +698,13 @@ class Wallet:
 
         UTXOs, val_found, STXOs = self.getIncompleteUTXOInfo(val=val, getAll=getAll, getArrs=True)
         if (not getAll) and (val_found>=val):
-            print 'exit1'
             return (UTXOs, val_found)
 
         #2) Loop over Blockchain, working through each part of each transaction of each block
         # until either the BC finishes or we meet our condition.
         for block in self.blockchain.chain[::-1]:
-            for txn in block.transxns:
-                #A) See if address is in Inputs array:
+            for txn in block.transxns[::-1]:
+                #A) See if address spends any UTXOs in this transaction's Inputs array; if so, record that UTXO's ID:
                 for inp in txn.inputs:
                     if (txn.coinBase==False and inp.scriptSig.address==addr):
                         STXOs.append( [ inp.TXID, inp.n ] )
@@ -714,13 +723,10 @@ class Wallet:
                             UTXOs.append( [txn.TXID, i, outp.scriptPubKey.verify] )
                             val_found += outp.val
                             if (not getAll) and (val_found >= val):
-                                print "exit2"
                                 return (UTXOs, val_found)
                     i+=1
         if val_found>=val:
-            print 'exit3'
             return (UTXOs, val_found)
-        print 'exit4'
         return (None, None)
 
     def outputsHelper(self, val=None, UTXO_val=None, rcpt_address=False):
@@ -740,7 +746,7 @@ class Wallet:
         else:
             return [ [val, rcpt_address] ]
 
-    def makeTransaction(self, rcpt_address, val):
+    def makeTransaction(self, rcpt_address, val, _print=True):
         '''
         Make transaction from this wallet to recepient's address of certain value.
         - rcpt_address (string): address of recipient
@@ -753,7 +759,8 @@ class Wallet:
         # 2) Get only enough UTXO to complete transaction. Pass them, in a convenient format, to the Transaction obj to set them as its Input.
         (UTXOs, UTXO_val) = self.getUTXOs(val=val, getAll=False) 
         if not UTXOs:
-            print "Insufficient Funds. Transaction cancelled."
+            if _print:
+                print "Insufficient Funds. Transaction cancelled."
             return
         transxn.setInputs(UTXOs, self.public_key)
 
@@ -769,8 +776,12 @@ class Wallet:
         # Note: The process for nodes to verify transactions hasn't been built out yet.
         self.blockchain.notifyNodes(data=transxn, newTransxn=True)
 
-        print "Successful transaction."
+        if _print:
+            print "Successful transaction."
         return transxn
+
+    def getBalance(self):
+        return self.getUTXOs(getAll=True)[1]
 
 ''' Global functions '''
 
