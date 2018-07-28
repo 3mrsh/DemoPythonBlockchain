@@ -36,17 +36,6 @@ class Blockchain:
         '''
         return Block(n="this is the genesis block, therefore this text is arbitrary", isGenesis=True)
 
-    def isValid(self, block):
-        '''
-        UNIMPLEMENTED
-
-        Tests validity of (1) the block against hashes of previous blocks and (2) transactions within the block
-        - block (Block): block to be tested
-        Returns: boolean
-        '''
-
-        return True
-
     def notifyNodes(self, data=None, newNode=False, newBlock=False, newTransxn=False, newCBVal = False):
         '''
         Notifies each nodes in object's nodes member of 1 of 3 events.
@@ -67,14 +56,10 @@ class Blockchain:
          - block (Block): block to be added
         Returns: Nothing
         '''
-        # 1) Test validity of block's hash.
-        validity = self.isValid(block)
-        # 2) If valid: add to chain ; remove transactions within it from incompl_transxns; notify the others.
-        if validity:
-            self.incompl_transxns = [transxn for transxn in self.incompl_transxns if transxn not in block.transxns]
-            self.my_incompl_transxns = [transxn for transxn in self.my_incompl_transxns if transxn not in block.transxns]
-            new_block = Block(copyBlock=block)
-            self.chain.append(new_block)
+        self.incompl_transxns = [transxn for transxn in self.incompl_transxns if transxn not in block.transxns]
+        self.my_incompl_transxns = [transxn for transxn in self.my_incompl_transxns if transxn not in block.transxns]
+        new_block = Block(copyBlock=block)
+        self.chain.append(new_block)
         return
     
     def newNode(self):
@@ -151,20 +136,36 @@ class Block:
     def setTransactions(self, t=[]):
         self.transxns = t
 
+    def calcHash(self, _merkleRoot=None, _nonce=None):
+        prevHash, timestamp = self.prevHash, self.timestamp
+        merkleRoot = _merkleRoot if _merkleRoot else self.merkleRoot
+        nonce = _nonce if _nonce else self.nonce
+
+        encrypter = SHA256.new()
+        _str = merkleRoot+prevHash+str(timestamp)+str(nonce)
+        encrypter.update(_str)
+        return encrypter.hexdigest()
+
     def proofOfWork(self, _print=False):
         ''' 
         Proof of Work function. Constructs Merkle Root, then compiles data into Header, then iterates over nonce until
         satisfying condition.
         - Returns: nonce (number)
         '''
-        merkleRoot, prevHash, timestamp, nonce = self.getMerkleRoot(), self.prevHash, self.timestamp, 0
-        encrypter = SHA256.new()
-
+        nonce = -1
         potlHash = ""
+        mr = self.getMerkleRoot(_set=True)
+
         while(potlHash[0:3]!="000"):
-            encrypter.update(merkleRoot+prevHash+str(timestamp)+str(nonce))
-            potlHash = encrypter.hexdigest()
             nonce+=1
+            potlHash = self.calcHash(_nonce=nonce, _merkleRoot=mr)
+        
+        # print "Success POW found with : "
+        # print "string: ", _str,"\n"
+        # print "merkleRoot = ", mr
+        # print "prevHash = ", self.prevHash
+        # print "timestamp = ", str(self.timestamp)
+        # print "nonce = ", str(nonce)
 
         self.hash = potlHash
         self.nonce = nonce
@@ -200,7 +201,7 @@ class Block:
                     indexed_transxns.append(indexed_transxns[-1])
         return (transactions, indexed_transxns)
     
-    def getMerkleRoot(self):
+    def getMerkleRoot(self, _set=True):
         '''
         Generates the Merkle Root for the header of the Block based on the included transactions
          - Returns: (string)     
@@ -241,7 +242,8 @@ class Block:
         # In event of Genesis Node without previous transactions, store arbitrary string insted of empty array
         hashes_iterator = "0" if len(hashes_iterator)==0 else hashes_iterator[0]
         # Store value of Merkle Tree & return it too just in case.
-        self.merkleRoot = hashes_iterator
+        if _set:
+            self.merkleRoot = hashes_iterator
         return hashes_iterator
 
 class Transaction:
@@ -454,7 +456,28 @@ class Node:
         - block (Block): block that we are verifying
         Return: boolean
         '''
-        return True
+        t1 = len(block.transxns)<=block.maxBlockSize
+        t2 = block.prevHash == self.blockchain.chain[-1].hash
+
+
+        mr = block.getMerkleRoot(_set=False)
+
+        # print "Calling calcHash from verify Block with : "
+        # print "merkleRoot = ", mr, "; mr==block.mr?", mr==block.merkleRoot
+        # print "prevHash = ", block.prevHash
+        # print "timestamp = ", str(block.timestamp)
+        # print "nonce = ", str(block.nonce)
+
+        h = block.calcHash(_merkleRoot=mr)
+        t3 = block.hash == h
+
+        if not t1:
+            print "block failed t1 ", block
+        if not t2:
+            print "block failed t2 ", block
+        if not t3:
+            print "block failed t3 ", block
+        return t1 and t2 and t3
 
     def verifyTransaction(self, txn = None):
         '''

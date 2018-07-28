@@ -109,7 +109,6 @@ def test5():
     print 'After mining an addl block, nodeCs balance == 45?', nodeC.wallet.getBalance() == (30+15)
     print 'If all printed booleans are True, the test was succesful.'
     
-#Problem: nodeB.wallet.getBalance()==10
 def test6():
     (nodeA, nodeB, nodeC) = newTestingEnv()
     num_txns = 6
