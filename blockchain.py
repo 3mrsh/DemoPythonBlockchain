@@ -65,7 +65,6 @@ class Blockchain:
     def newNode(self):
         '''
         Creates and appends new node to blockchain's node property
-        -
         Returns: Node
         '''
         new_node = Node( nds = self.nodes[:], chain = self.chain[:], inctrnsxns = self.incompl_transxns[:], CBVal=self.CBVal)
@@ -79,6 +78,11 @@ class Blockchain:
         self.notifyNodes(data=transxn, newTransxn=True)
 
     def getByTXID(self,txid):
+        '''
+        Gets Transaction with specified TXID from the Blockchain .
+        - txid (string): TXID of desired Transaction
+        Returns: Transaction
+        '''
         for block in self.chain:
             for txn in block.transxns:
                 if txn.TXID==txid:
@@ -108,6 +112,11 @@ class Block:
             self.set_constructor_vals(ph=ph, t=t, n=n, _time=_time, isGenesis=isGenesis, minerAdd=minerAdd, CBVal=CBVal)
 
     def set_constructor_vals(self, ph="", mr=None, t=[], n=None, _time=None, isGenesis=False, minerAdd="", CBVal=None, MBS=5, hash=None):
+        '''
+        Function to avoid re-written code; sets vals of the Block class members.
+        Var names are intuitive.
+        Returns: None
+        '''
         '''Header: '''
         self.prevHash = ph #: string
         self.merkleRoot = mr #: string
@@ -123,20 +132,33 @@ class Block:
         self.maxBlockSize = MBS #[limit] on # txns
 
         ''' HASH '''
-        self.hash = self.getGenesisHash() if isGenesis else hash
+        self.hash = self._getGenesisHash() if isGenesis else hash
 
-    # def __repr__(self):
-    #     return str(vars(self))
-
-    def getGenesisHash(self):
+    def _getGenesisHash(self):
+        '''
+        Function to hash Genesis Block.
+        Called only when initiating Genesis.
+        Returns: Genesis' Hash
+        '''
         encrypter = SHA256.new()
         encrypter.update(self.nonce)
         return encrypter.hexdigest()
 
     def setTransactions(self, t=[]):
+        '''
+        State management fxn; sets Block's transactions
+        - t (Transaction[]): Array of Transactions to store.
+        Returns: None
+        '''
         self.transxns = t
 
     def calcHash(self, _merkleRoot=None, _nonce=None):
+        '''
+        Calculates block hash using SHA256 Encryption
+        - _merkleRoot (string): Optional arg for MerkleRoot
+        - _nonce (string): Optional arg for Nonce
+        Returns: Hash of Block with PH, Timestamp, MR, and Nonce as specified.
+        '''
         prevHash, timestamp = self.prevHash, self.timestamp
         merkleRoot = _merkleRoot if _merkleRoot else self.merkleRoot
         nonce = _nonce if _nonce else self.nonce
@@ -150,6 +172,7 @@ class Block:
         ''' 
         Proof of Work function. Constructs Merkle Root, then compiles data into Header, then iterates over nonce until
         satisfying condition.
+        - _print (boolean): Print success statements
         - Returns: nonce (number)
         '''
         nonce = -1
@@ -160,18 +183,10 @@ class Block:
             nonce+=1
             potlHash = self.calcHash(_nonce=nonce, _merkleRoot=mr)
         
-        # print "Success POW found with : "
-        # print "string: ", _str,"\n"
-        # print "merkleRoot = ", mr
-        # print "prevHash = ", self.prevHash
-        # print "timestamp = ", str(self.timestamp)
-        # print "nonce = ", str(nonce)
-
         self.hash = potlHash
         self.nonce = nonce
         if _print:
             print("POW Success; nonce = ", nonce, "; hash = ",potlHash)
-        # then hash the Merkle Tree; the Nonce; and the Prev. Hash all together.
         return 
     
     def formatMerkleTree(self, transactions):
@@ -250,6 +265,7 @@ class Transaction:
     def __init__(self, _cB=False):
         '''
         Constructor.
+        _cB (boolean): is this the coinbase transaction?
         '''
         self.header = TransactionHeader()
         self.inputs = [ ] #self.getTransactionInputs()
@@ -258,7 +274,14 @@ class Transaction:
         self.TXID = None
         self.timestamp = time.time()
 
+    def __repr__(self):
+        return str(vars(self))
+
     def getTXID(self):
+        '''
+        Calculate and return TXID of this Transaction based on Header, Inputs, Outputs, CoinbaseBool, and Timestamp
+        Returns: TXID (String)
+        '''
         encrypter = SHA256.new()
         _str = str(self.header)+str(self.inputs) + str(self.outputs) + str(self.coinBase)+str(self.timestamp)
         encrypter.update(_str)
@@ -268,10 +291,11 @@ class Transaction:
         return txid
 
     def setTXID(self):
+        '''
+        Function to calculate & SET the TXID of this transaction.
+        Returns: None
+        '''
         self.TXID = self.getTXID()
-
-    def __repr__(self):
-        return str(vars(self))
     
     def setInputs(self, inputs, pk=None):
         '''
@@ -291,7 +315,7 @@ class Transaction:
     def setOutputs(self, outputs):
         '''
         Takes a list of outputs in convenient format and instantiates TransactionOutputs from them.
-        - outputs [[#, str]x2?]: Info for Outputs; Ready to be thrown into constructor.
+        - outputs [[#, str] (x2 optionally)]: Info for Outputs; Ready to be thrown into constructor.
         Returns: nothing
         '''
         for (_val, rcpt_addr) in outputs:
@@ -300,6 +324,10 @@ class Transaction:
         self.header.vout_sz = len(outputs)
 
     def toString(self):
+        '''
+        Helper function; returns stirng representation of object.
+        Returns String
+        '''
         return str(vars(self))
 
 class TransactionHeader:
@@ -349,6 +377,7 @@ class TransactionOutput:
         '''
         Constructor.
         - _val (number): value of this output
+        - _rcpt_address (string): Address (Public Key Hash) of recipient for this one Output.
         '''
         self.val = _val
         self.scriptPubKey = scriptPubKey(rcpt_address)
@@ -363,8 +392,15 @@ class scriptPubKey:
     A lock is created simply by passing in the recipient's address.
     '''
     def __init__(self, rcpt_addr=""):
+        '''
+        Constructor.
+        - rcpt_addr: Recipient's address
+        '''
         self.rcpt_address = rcpt_addr #Pub Key Hash
-    
+
+    def __repr__(self):
+        return str(vars(self))
+
     def verify(self, pub_k=None, retAddrInstead=False):
         '''
         Called by the scriptSig of the 'redeeming transaction' to 'unlock' this UTXO. We hash input public_key
@@ -380,9 +416,6 @@ class scriptPubKey:
             else:
                 return True
         return False
-
-    def __repr__(self):
-        return str(vars(self))
 
 class scriptSig:
     '''
@@ -402,16 +435,19 @@ class scriptSig:
         self.PKScriptFxn = PKScriptFxn
         (self.verified, self.address) = self.verify()
 
+    def __repr__(self):
+        return str(vars(self))
+
     def verify(self):
+        '''
+        Function to "Unlock" UTXO by passing the public key into that UTXO's PKScriptFxn, thereby constituting a signature.
+        '''
         if self.PKScriptFxn:
             verified_add = self.PKScriptFxn(pub_k = self.public_key, retAddrInstead=True)
             return (True, verified_add) if verified_add else (False, None)
         else:
             print 'PKScript function is none?'
-
-    def __repr__(self):
-        return str(vars(self))
-
+    
 class Node:
     '''
     Node class with wallet and ability-to-mine built in.
@@ -436,6 +472,12 @@ class Node:
 
     # Keeping up-to-date:
     def updateInfo(self, data=None, newNode=False, newBlock=False, newTransxn=False, newCBVal=False):
+        '''
+        Function to update Node's Blockchain Info based on changes to someone else's blockchain.
+        - data (Node | number | Transaction | Block): The value of the changed data.
+        - newNode, newBlock, newTransxn, newCBVal (boolean) : Flags indicating which of the 4 have been changed.
+        Returns: None
+        '''
         if newNode:
             self.blockchain.nodes.append(data) #Pass by Reference
         elif newCBVal:
@@ -457,17 +499,10 @@ class Node:
         Return: boolean
         '''
         t1 = len(block.transxns)<=block.maxBlockSize
+
         t2 = block.prevHash == self.blockchain.chain[-1].hash
 
-
         mr = block.getMerkleRoot(_set=False)
-
-        # print "Calling calcHash from verify Block with : "
-        # print "merkleRoot = ", mr, "; mr==block.mr?", mr==block.merkleRoot
-        # print "prevHash = ", block.prevHash
-        # print "timestamp = ", str(block.timestamp)
-        # print "nonce = ", str(block.nonce)
-
         h = block.calcHash(_merkleRoot=mr)
         t3 = block.hash == h
 
@@ -521,8 +556,9 @@ class Node:
     #Mining:
     def mine(self, _print=False):
         '''
-        Create and then mine a new block.
-        INCOMPLETE
+        Creates and mines a new Block with a subset of all incomplete transactions. 
+        - _print (boolean): Whether should print when mine is complete.
+        Returns: Block
         '''
         #To mine, you:
         #1) Create a new block.
@@ -566,7 +602,6 @@ class Node:
         cbTransxn.setTXID()
         return cbTransxn
 
-    
     #Helper fucntions:
     def __notCBTxn(self, txn = None):
         '''
@@ -581,6 +616,13 @@ class Node:
         return True
 
     def __inputsAreGrequalOutputs(self, txn = None):
+        '''
+        Helper function to satisfy test#2 of self.verifyTransaction(*)
+        Sum of all inputs >= Sum of all Outputs
+        - txn (Transaction): Transaction in question
+        Returns (boolean) : Is condition satisfied?
+        '''
+
         #Must throw this in with the other pending transactions so we can get output value.
         inputs_pairs = []
         input_val = 0
@@ -650,10 +692,19 @@ class Node:
         return False
     
     def __getOutputVal(self, txn = None):
+        '''
+        Helper function to __inputsAreGrequalOutputs(.);
+        Calculates sum of Output Values for a Transaction's Output.
+        Returns (Int): Sum of all Output vals
+        '''
         return sum([outp.val for outp in txn.outputs])
 
 class Wallet:
     def __init__(self, bc):
+        '''
+        Constructor.
+        - bc (Blockchain)
+        '''
         self.public_key, self.private_key = self.genKeys() #: string
         self.address = ConvertPK2Address(self.public_key)
         self.blockchain = bc
@@ -662,6 +713,10 @@ class Wallet:
         return str(vars(self))
     
     def genKeys(self):
+        '''
+        Create and return public & private keys.
+        Returns: [public_key (string), private_key (string)]
+        '''
         key = RSA.generate(2048)
         private_key = key.export_key()
         public_key = key.publickey().export_key()
@@ -669,7 +724,13 @@ class Wallet:
         private_key = private_key
         return [public_key, private_key]
     
-    def getIncompleteUTXOInfo(self, val=0,getAll=False, getArrs=True):
+    def getIncompleteUTXOInfo(self, val=0,getAll=False):
+        '''
+        Look through incomplete transactions and return Info about this address' UTXOs there.
+        - val (number) : The value of the transaction - i.e. the value we should stop when we find.
+        - getAll (boolean) : Should we get all the incomplete UTXOs?
+        Returns: (UTXOs, val_found, STXOs) : ( [TXID <string>, n <number>, PKScript<function>], number, [TXID <string>, n <number>])
+        '''
         val_found = 0
         STXOs, UTXOs = [], [] #Spent Transaction Outputs; Unspent Transaction Outputs
         addr = self.address
@@ -691,15 +752,9 @@ class Wallet:
                         UTXOs.append( [txn.TXID, i, outp.scriptPubKey.verify] )
                         val_found += outp.val
                         if (not getAll) and (val_found >= val):
-                            if(getArrs):
-                                return (UTXOs, val_found, STXOs)
-                            else:
-                                return (UTXOs, val_found)
+                            return (UTXOs, val_found, STXOs)
                 i +=1
-        if(getArrs):
-            return ( UTXOs, val_found, STXOs)
-        else:
-            return (UTXOs, val_found)
+        return ( UTXOs, val_found, STXOs)
 
     def getUTXOs(self, val=0, getAll=False):
         '''
@@ -712,14 +767,14 @@ class Wallet:
         We exit if we complete the Blockchain OR get at least the value required
         - val (number): The Satoshi value of currency needed for transaction.
         - getAll (boolean): Get all UTXOs?
-        Returns ( [ [TXID, N, PublicKeySig],... ] , number ) | ( None, None ) : (UTXOs, value)
+        Returns (UTXOs, value): ( [TXID <string>, n <number>, PKScript<function>], number) | ( None, None )
         '''
         #1) Declare some vars to help us:
         val_found = 0
         STXOs, UTXOs = [], [] #Spent Transaction Outputs; Unspent Transaction Outputs
         addr = self.address
 
-        UTXOs, val_found, STXOs = self.getIncompleteUTXOInfo(val=val, getAll=getAll, getArrs=True)
+        UTXOs, val_found, STXOs = self.getIncompleteUTXOInfo(val=val, getAll=getAll)
         if (not getAll) and (val_found>=val):
             return (UTXOs, val_found)
 
@@ -805,6 +860,10 @@ class Wallet:
             return transxn
 
     def getBalance(self):
+        '''
+        Get Total Balance of this Wallet (both (in)complete UTXOs )
+        Returns: Number
+        '''
         return self.getUTXOs(getAll=True)[1]
 
 ''' Global functions '''
